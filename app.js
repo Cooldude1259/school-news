@@ -1,3 +1,7 @@
+// ── Supabase client ──────────────────────────────────────────
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── Apply config ───────────────────────────────────────────
 document.querySelectorAll("[data-school-name]").forEach(
   (el) => (el.textContent = SCHOOL_CONFIG.schoolName)
 );
@@ -15,7 +19,8 @@ document.querySelectorAll("[data-footer-note]").forEach(
 );
 document.title = `${SCHOOL_CONFIG.publicationName} · ${SCHOOL_CONFIG.schoolName}`;
 
-const root = document.documentElement;
+// ── Theme ──────────────────────────────────────────────────
+const root     = document.documentElement;
 const themeBtn = document.getElementById("theme-btn");
 
 function applyTheme(theme) {
@@ -23,29 +28,48 @@ function applyTheme(theme) {
   localStorage.setItem("theme", theme);
 }
 
-const saved = localStorage.getItem("theme");
-const preferred =
-  saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+const saved    = localStorage.getItem("theme");
+const preferred = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
 applyTheme(preferred);
 
 themeBtn.addEventListener("click", () => {
   applyTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark");
 });
 
+// ── Helpers ────────────────────────────────────────────────
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString("en-AU", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+    day: "numeric", month: "long", year: "numeric",
   });
 }
 
+// ── State ──────────────────────────────────────────────────
+let allArticles    = [];
 let activeCategory = "All";
-let searchQuery = "";
+let searchQuery    = "";
 
-const featuredArticle = NEWS_DATA.find((a) => a.featured) || NEWS_DATA[0];
+// ── Load articles from Supabase ──────────────────────────────
+async function loadArticles() {
+  const { data, error } = await _sb
+    .from("articles")
+    .select("*")
+    .order("date", { ascending: false });
 
-function renderHero(article) {
+  if (error) {
+    console.error("Failed to load articles:", error.message);
+    return;
+  }
+
+  allArticles = data;
+  renderHero();
+  buildFilters();
+  renderGrid();
+}
+
+// ── Hero ───────────────────────────────────────────────────
+function renderHero() {
+  const article = allArticles.find((a) => a.featured) || allArticles[0];
+  if (!article) return;
   document.getElementById("hero-tag").textContent     = article.category;
   document.getElementById("hero-title").textContent   = article.title;
   document.getElementById("hero-summary").textContent = article.summary;
@@ -54,39 +78,41 @@ function renderHero(article) {
   document.getElementById("hero").onclick = () => openModal(article);
 }
 
-renderHero(featuredArticle);
+// ── Category filter pills ──────────────────────────────────
+function buildFilters() {
+  const filterBar  = document.getElementById("filter-bar");
+  const categories = ["All", ...new Set(allArticles.map((a) => a.category))];
+  filterBar.innerHTML = "";
 
-const categories = ["All", ...new Set(NEWS_DATA.map((a) => a.category))];
-const filterBar  = document.getElementById("filter-bar");
-
-categories.forEach((cat) => {
-  const btn = document.createElement("button");
-  btn.className = "filter-pill" + (cat === "All" ? " active" : "");
-  btn.textContent = cat;
-  btn.addEventListener("click", () => {
-    activeCategory = cat;
-    filterBar.querySelectorAll(".filter-pill").forEach((p) =>
-      p.classList.toggle("active", p.textContent === cat)
-    );
-    renderGrid();
+  categories.forEach((cat) => {
+    const btn = document.createElement("button");
+    btn.className   = "filter-pill" + (cat === "All" ? " active" : "");
+    btn.textContent = cat;
+    btn.addEventListener("click", () => {
+      activeCategory = cat;
+      filterBar.querySelectorAll(".filter-pill").forEach((p) =>
+        p.classList.toggle("active", p.textContent === cat)
+      );
+      renderGrid();
+    });
+    filterBar.appendChild(btn);
   });
-  filterBar.appendChild(btn);
-});
+}
 
-const searchInput = document.getElementById("search-input");
-searchInput.addEventListener("input", () => {
-  searchQuery = searchInput.value.toLowerCase().trim();
+// ── Search ─────────────────────────────────────────────────
+document.getElementById("search-input").addEventListener("input", (e) => {
+  searchQuery = e.target.value.toLowerCase().trim();
   renderGrid();
 });
 
+// ── Grid ───────────────────────────────────────────────────
 const newsGrid   = document.getElementById("news-grid");
 const countLabel = document.getElementById("article-count");
 
 function getFiltered() {
-  return NEWS_DATA.filter((a) => {
+  return allArticles.filter((a) => {
     const matchCat = activeCategory === "All" || a.category === activeCategory;
-    const matchQ   =
-      !searchQuery ||
+    const matchQ   = !searchQuery ||
       a.title.toLowerCase().includes(searchQuery) ||
       a.summary.toLowerCase().includes(searchQuery) ||
       a.category.toLowerCase().includes(searchQuery) ||
@@ -98,8 +124,7 @@ function getFiltered() {
 function renderGrid() {
   const articles = getFiltered();
   newsGrid.innerHTML = "";
-  countLabel.textContent =
-    articles.length === 1 ? "1 article" : `${articles.length} articles`;
+  countLabel.textContent = articles.length === 1 ? "1 article" : `${articles.length} articles`;
 
   if (articles.length === 0) {
     newsGrid.innerHTML = `
@@ -129,8 +154,7 @@ function renderGrid() {
   });
 }
 
-renderGrid();
-
+// ── Modal ──────────────────────────────────────────────────
 const backdrop   = document.getElementById("modal-backdrop");
 const modalClose = document.getElementById("modal-close");
 
@@ -152,3 +176,6 @@ function closeModal() {
 modalClose.addEventListener("click", closeModal);
 backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeModal(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+// ── Boot ───────────────────────────────────────────────────
+loadArticles();

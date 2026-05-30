@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · The Weekly Brief</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .admin-wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
+    .login-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-card);
+      padding: 40px; max-width: 420px; margin: 80px auto 0;
+    }
+    .login-card h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 6px; }
+    .login-card > p { font-size: 14px; color: var(--text-secondary); margin-bottom: 28px; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+    input[type="email"], input[type="password"], input[type="text"],
+    input[type="date"], select, textarea {
+      background: var(--bg-input); border: 1px solid transparent;
+      border-radius: var(--radius-sm); padding: 9px 12px;
+      font-size: 14px; font-family: var(--font-sans); color: var(--text-primary);
+      outline: none; transition: border-color var(--transition), box-shadow var(--transition);
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,113,227,0.18);
+    }
+    textarea { resize: vertical; min-height: 160px; line-height: 1.5; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 20px; border-radius: 20px; font-size: 14px; font-weight: 600;
+      font-family: var(--font-sans); cursor: pointer; border: none;
+      transition: opacity 0.15s ease, transform 0.12s ease;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+    .btn-primary:hover:not(:disabled) { opacity: 0.88; }
+    .btn-sm { padding: 5px 14px; font-size: 12px; }
+    .btn-danger { background: #ff3b30; color: #fff; }
+    .btn-ghost { background: var(--bg-input); color: var(--text-primary); }
+    .error-msg { font-size: 13px; color: #ff3b30; margin-top: 10px; min-height: 18px; }
+    .admin-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
+    }
+    .admin-header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
+    .admin-header-right { display: flex; align-items: center; gap: 10px; }
+    .admin-email { font-size: 13px; color: var(--text-secondary); }
+    .panel {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 28px 32px;
+      margin-bottom: 32px; box-shadow: var(--shadow-card);
+    }
+    .panel h2 { font-size: 17px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.3px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .article-list { display: flex; flex-direction: column; gap: 10px; }
+    .article-row {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 14px 18px;
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .article-row-info { flex: 1; min-width: 0; }
+    .article-row-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .article-row-meta { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+    .article-row-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+    .featured-badge {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+      background: var(--accent); color: #fff; padding: 2px 7px; border-radius: 20px;
+    }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .login-card { padding: 28px 22px; }
+      .panel { padding: 22px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav" role="navigation">
+    <div class="nav-inner">
+      <a class="nav-logo" href="index.html" aria-label="Back to site">
+        <div class="nav-logo-badge" data-school-short>RA</div>
+        <span class="nav-logo-text" data-publication>The Weekly Brief</span>
+      </a>
+      <div class="nav-spacer"></div>
+      <button id="theme-btn" class="theme-btn" aria-label="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <div id="login-screen">
+    <div class="login-card">
+      <h2>Admin Sign In</h2>
+      <p>Sign in with your admin email and password to manage articles.</p>
+      <div class="field">
+        <label for="login-email">Email</label>
+        <input id="login-email" type="email" placeholder="admin@school.edu.au" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button id="login-btn" class="btn btn-primary" style="margin-top:8px">Sign In</button>
+      <p id="login-error" class="error-msg"></p>
+    </div>
+  </div>
+
+  <div id="admin-panel" class="admin-wrap" style="display:none">
+    <div class="admin-header">
+      <h1>Article Manager</h1>
+      <div class="admin-header-right">
+        <span class="admin-email" id="admin-email-label"></span>
+        <button id="signout-btn" class="btn btn-ghost btn-sm">Sign out</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 id="form-heading">New Article</h2>
+      <div class="form-row">
+        <div class="field">
+          <label for="f-category">Category</label>
+          <select id="f-category">
+            <option>Student News</option><option>Events</option><option>Sports</option>
+            <option>Faculty News</option><option>Staff Notice</option>
+            <option>Administration</option><option>Wellbeing</option><option>Weekly Update</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-date">Date</label>
+          <input id="f-date" type="date" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-title">Title</label>
+        <input id="f-title" type="text" placeholder="Article headline" />
+      </div>
+      <div class="field">
+        <label for="f-author">Author / Source</label>
+        <input id="f-author" type="text" placeholder="e.g. Principal, PDHPE Faculty" />
+      </div>
+      <div class="field">
+        <label for="f-summary">Summary (shown on card)</label>
+        <input id="f-summary" type="text" placeholder="One or two sentences" />
+      </div>
+      <div class="field">
+        <label for="f-body">Body (HTML supported)</label>
+        <textarea id="f-body" placeholder="<p>Full article content...</p>"></textarea>
+      </div>
+      <div class="field" style="flex-direction:row;align-items:center;gap:10px;margin-bottom:0">
+        <input id="f-featured" type="checkbox" style="width:auto;accent-color:var(--accent)" />
+        <label for="f-featured" style="margin:0;color:var(--text-primary)">Pin as featured (hero) article</label>
+      </div>
+      <div class="form-actions">
+        <button id="save-btn" class="btn btn-primary" style="width:auto">Publish Article</button>
+        <button id="cancel-btn" class="btn btn-ghost" style="display:none">Cancel edit</button>
+      </div>
+      <p id="form-error" class="error-msg"></p>
+    </div>
+
+    <div class="panel">
+      <h2>All Articles</h2>
+      <div id="article-list" class="article-list">
+        <p style="color:var(--text-secondary);font-size:14px">Loading…</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script>
+    const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    document.querySelectorAll("[data-school-short]").forEach((el) => (el.textContent = SCHOOL_CONFIG.schoolShortName));
+    document.querySelectorAll("[data-publication]").forEach((el) => (el.textContent = SCHOOL_CONFIG.publicationName));
+    document.title = `Admin · ${SCHOOL_CONFIG.publicationName}`;
+
+    const root = document.documentElement;
+    const saved = localStorage.getItem("theme");
+    root.setAttribute("data-theme", saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+    document.getElementById("theme-btn").addEventListener("click", () => {
+      const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    });
+
+    _sb.auth.onAuthStateChange((_event, session) => {
+      if (session) showPanel(session.user.email);
+      else showLogin();
+    });
+
+    function showLogin() {
+      document.getElementById("login-screen").style.display = "block";
+      document.getElementById("admin-panel").style.display  = "none";
+    }
+
+    function showPanel(email) {
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("admin-panel").style.display  = "block";
+      document.getElementById("admin-email-label").textContent = email;
+      loadArticles();
+      document.getElementById("f-date").value = new Date().toISOString().split("T")[0];
+    }
+
+    document.getElementById("login-btn").addEventListener("click", async () => {
+      const email    = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const errEl    = document.getElementById("login-error");
+      const btn      = document.getElementById("login-btn");
+      errEl.textContent = "";
+      btn.disabled = true; btn.textContent = "Signing in…";
+      const { error } = await _sb.auth.signInWithPassword({ email, password });
+      btn.disabled = false; btn.textContent = "Sign In";
+      if (error) errEl.textContent = error.message;
+    });
+
+    document.getElementById("login-password").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("login-btn").click();
+    });
+
+    document.getElementById("signout-btn").addEventListener("click", async () => {
+      await _sb.auth.signOut();
+    });
+
+    let editingId = null;
+
+    async function loadArticles() {
+      const { data, error } = await _sb.from("articles")
+        .select("id,category,title,author,date,featured")
+        .order("date", { ascending: false });
+      const list = document.getElementById("article-list");
+      if (error || !data.length) {
+        list.innerHTML = `<p style="color:var(--text-secondary);font-size:14px">${error ? error.message : "No articles yet."}</p>`;
+        return;
+      }
+      list.innerHTML = "";
+      data.forEach((a) => {
+        const row = document.createElement("div");
+        row.className = "article-row";
+        row.innerHTML = `
+          <div class="article-row-info">
+            <div class="article-row-title">${a.title}</div>
+            <div class="article-row-meta">${a.category} · ${a.author} · ${new Date(a.date).toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"})}</div>
+          </div>
+          <div class="article-row-actions">
+            ${a.featured ? '<span class="featured-badge">Featured</span>' : ""}
+            <button class="btn btn-ghost btn-sm" onclick="startEdit(${a.id})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteArticle(${a.id})">Delete</button>
+          </div>`;
+        list.appendChild(row);
+      });
+    }
+
+    async function startEdit(id) {
+      const { data, error } = await _sb.from("articles").select("*").eq("id", id).single();
+      if (error || !data) return;
+      editingId = id;
+      document.getElementById("f-category").value   = data.category;
+      document.getElementById("f-title").value       = data.title;
+      document.getElementById("f-author").value      = data.author;
+      document.getElementById("f-date").value        = data.date;
+      document.getElementById("f-summary").value     = data.summary;
+      document.getElementById("f-body").value        = data.body;
+      document.getElementById("f-featured").checked  = data.featured;
+      document.getElementById("form-heading").textContent = "Edit Article";
+      document.getElementById("save-btn").textContent     = "Save Changes";
+      document.getElementById("cancel-btn").style.display = "inline-flex";
+      document.getElementById("f-title").focus();
+      document.querySelector(".panel").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function cancelEdit() {
+      editingId = null;
+      document.getElementById("form-heading").textContent = "New Article";
+      document.getElementById("save-btn").textContent     = "Publish Article";
+      document.getElementById("cancel-btn").style.display = "none";
+      document.getElementById("form-error").textContent   = "";
+      ["f-title","f-author","f-summary","f-body"].forEach((id) => (document.getElementById(id).value = ""));
+      document.getElementById("f-featured").checked = false;
+      document.getElementById("f-date").value = new Date().toISOString().split("T")[0];
+    }
+
+    document.getElementById("cancel-btn").addEventListener("click", cancelEdit);
+
+    document.getElementById("save-btn").addEventListener("click", async () => {
+      const payload = {
+        category: document.getElementById("f-category").value,
+        title:    document.getElementById("f-title").value.trim(),
+        author:   document.getElementById("f-author").value.trim(),
+        date:     document.getElementById("f-date").value,
+        summary:  document.getElementById("f-summary").value.trim(),
+        body:     document.getElementById("f-body").value.trim(),
+        featured: document.getElementById("f-featured").checked,
+      };
+      const errEl = document.getElementById("form-error");
+      errEl.textContent = "";
+      if (!payload.title || !payload.summary || !payload.body || !payload.author) {
+        errEl.textContent = "Please fill in all fields."; return;
+      }
+      const btn = document.getElementById("save-btn");
+      btn.disabled = true; btn.textContent = "Saving…";
+      let error;
+      if (editingId) {
+        ({ error } = await _sb.from("articles").update(payload).eq("id", editingId));
+      } else {
+        ({ error } = await _sb.from("articles").insert(payload));
+      }
+      btn.disabled = false;
+      btn.textContent = editingId ? "Save Changes" : "Publish Article";
+      if (error) { errEl.textContent = error.message; } else { cancelEdit(); loadArticles(); }
+    });
+
+    async function deleteArticle(id) {
+      if (!confirm("Delete this article? This cannot be undone.")) return;
+      const { error } = await _sb.from("articles").delete().eq("id", id);
+      if (!error) loadArticles();
+    }
+  </script>
+</body>
+</html>
