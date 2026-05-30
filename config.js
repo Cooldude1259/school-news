@@ -4,10 +4,10 @@
 
 const SCHOOL_CONFIG = {
   // The full name of the school
-  schoolName: "Riverside Academy",
+  schoolName: "Secondary College",
 
   // Short name / abbreviation shown in the nav logo
-  schoolShortName: "RA",
+  schoolShortName: "MSC",
 
   // Tagline shown under the masthead
   tagline: "News & Updates for the Whole School",
@@ -16,7 +16,7 @@ const SCHOOL_CONFIG = {
   publicationName: "The Weekly Brief",
 
   // Footer note
-  footerNote: "Riverside Academy · For staff and students",
+  footerNote: "Secondary College · For staff and students",
 };
 
 // ─────────────────────────────────────────────────────────────
